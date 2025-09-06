@@ -3,16 +3,13 @@
 ## 🏗️ Architecture Overview
 
 ### System Components
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Source DB     │    │   Apache        │    │  Data Warehouse │
-│  (PostgreSQL)   │───▶│   Airflow       │───▶│  (PostgreSQL)   │
-│                 │    │                 │    │                 │
-└─────────────────┘    │                 │    └─────────────────┘
-┌─────────────────┐    │                 │
-│   CSV Files     │───▶│                 │
-│                 │    │                 │
-└─────────────────┘    └─────────────────┘
+
+```mermaid
+graph LR
+    A[Source DB - PostgreSQL] --> B[Apache Airflow]
+    C[CSV Files] --> B
+    B --> D[Data Lake/FileSystem]
+    D --> E[Data Warehouse - PostgreSQL]
 ```
 
 **3 Database Architecture:**
@@ -51,14 +48,14 @@ etl_challenge_v1/
 
 ## ⚡ Pipeline Tasks
 
-| Task | Function | Input | Output |
-|------|----------|-------|--------|
-| **extract_csv_data** | Extract CSV transactions | `sources/transacoes.csv` | `/data/YYYY-MM-DD/csv/transacoes.csv` |
-| **extract_sql_data** | Extract 6 PostgreSQL tables | Source DB tables | `/data/YYYY-MM-DD/sql/*.csv` |
-| **sync_extractions** | Synchronize parallel extractions | - | Task coordination |
-| **load_csv_data** | Load CSV to warehouse | Extracted CSV | `staging.transacoes` |
-| **load_sql_data** | Load SQL tables to warehouse | Extracted SQL files | `staging.*` tables |
-| **validate_data_quality** | Verify data loading | All staging tables | Success/Failure status |
+| Task                      | Function                         | Input                    | Output                                |
+| ------------------------- | -------------------------------- | ------------------------ | ------------------------------------- |
+| **extract_csv_data**      | Extract CSV transactions         | `sources/transacoes.csv` | `/data/YYYY-MM-DD/csv/transacoes.csv` |
+| **extract_sql_data**      | Extract 6 PostgreSQL tables      | Source DB tables         | `/data/YYYY-MM-DD/sql/*.csv`          |
+| **sync_extractions**      | Synchronize parallel extractions | -                        | Task coordination                     |
+| **load_csv_data**         | Load CSV to warehouse            | Extracted CSV            | `staging.transacoes`                  |
+| **load_sql_data**         | Load SQL tables to warehouse     | Extracted SQL files      | `staging.*` tables                    |
+| **validate_data_quality** | Verify data loading              | All staging tables       | Success/Failure status                |
 
 ## 🚀 Key Features
 
