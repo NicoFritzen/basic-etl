@@ -101,6 +101,12 @@ docker-compose exec airflow-scheduler airflow dags trigger banvic_etl
 
 # 4. Monitor execution
 docker-compose logs -f airflow-scheduler
+
+# 5. Verify DAG dependencies
+docker-compose exec airflow-scheduler airflow dags show banvic_etl
+
+# 6. Verify the pattern of files
+docker-compose exec airflow-scheduler find /opt/airflow/data -type f -name "*.csv"
 ```
 
 ## 🔍 Data Verification
@@ -137,8 +143,8 @@ docker-compose down --rmi all
 
 | Database | Tables | Records | Purpose |
 |----------|--------|---------|---------|
-| **source-db** | 6 tables | 4,201 | Original business data |
-| **data-warehouse** | 8 tables | 73,927 | Processed ETL data |
+| **source-db** | 6 tables | 998 | Original business data |
+| **data-warehouse** | 8 tables | 71,921 | Processed ETL data |
 | **airflow-db** | System tables | Metadata | Pipeline orchestration |
 
 ---
