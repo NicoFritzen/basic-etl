@@ -1,0 +1,22 @@
+# Logs do Airflow (gerados automaticamente)
+logs/
+!logs/.gitkeep
+
+# Dados extraídos pelo pipeline (gerados automaticamente)  
+data/
+!data/.gitkeep
+
+# Volumes de banco de dados Docker
+dbdata-*/
+db_data/
+
+# Backups de banco
+*.sql.bak
+backup_*.sql
+
+# Cache Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+*.pyo

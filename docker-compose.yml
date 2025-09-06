@@ -1,0 +1,79 @@
+services:
+  # Banco de dados fonte (BanVic)
+  source-db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: banvic
+      POSTGRES_USER: data_engineer
+      POSTGRES_PASSWORD: v3rysecur&pas5w0rd
+    volumes:
+      - ./dbdata-source:/var/lib/postgresql/data
+      - ./sources/banvic.sql:/docker-entrypoint-initdb.d/banvic.sql
+    ports:
+      - "55432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U data_engineer -d banvic"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Banco de dados do Airflow
+  airflow-db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: airflow_db
+      POSTGRES_USER: airflow_user
+      POSTGRES_PASSWORD: airflow_pass
+    volumes:
+      - ./dbdata-airflow:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U airflow_user -d airflow_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Data Warehouse (PostgreSQL)
+  data-warehouse:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: dw_banvic
+      POSTGRES_USER: dw_user
+      POSTGRES_PASSWORD: dw_password
+    volumes:
+      - ./dbdata-dw:/var/lib/postgresql/data
+      - ./config/dw_init.sql:/docker-entrypoint-initdb.d/dw_init.sql
+    ports:
+      - "54322:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dw_user -d dw_banvic"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Airflow Scheduler (sem webserver)
+  airflow-scheduler:
+    build: .
+    command: >
+      bash -c '
+      airflow db migrate &&
+      airflow scheduler'
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow_user:airflow_pass@airflow-db:5432/airflow_db
+      AIRFLOW__CORE__FERNET_KEY: 'pVXj8kE7d4K1-4vV2K1I9fBs0FbN6mF9VjV_K_2F0e4='
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'false'
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+      AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: 'true'
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./plugins:/opt/airflow/plugins
+      - ./data:/opt/airflow/data
+      - ./sources/transacoes.csv:/opt/airflow/data/transacoes.csv
+    depends_on:
+      airflow-db:
+        condition: service_healthy
+      source-db:
+        condition: service_healthy
+      data-warehouse:
+        condition: service_healthy
